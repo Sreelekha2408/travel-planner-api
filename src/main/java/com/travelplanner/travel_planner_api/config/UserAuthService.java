@@ -14,11 +14,13 @@ public class UserAuthService implements UserDetailsService {
 
   @Autowired
   UserRepo userRepo;
+  // Spring calls the login identifier "username"; ours is the email. UserPrincipal still
+  // returns the real username, so getAuthentication().getName() in services is unchanged.
   @Override
-  public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-    User user = userRepo.findByUsername(username);
+  public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+    User user = userRepo.findByEmail(email);
     if(user == null) {
-      throw new UsernameNotFoundException("User not found " + username);
+      throw new UsernameNotFoundException("User not found " + email);
     }
     return new UserPrincipal(user);
   }

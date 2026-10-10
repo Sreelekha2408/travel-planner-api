@@ -37,11 +37,11 @@ public class UserService {
 
   public String verifyUser(UserLoginRequest userLoginRequest) {
     try {
-      if(userLoginRequest.getUsername() == null || userLoginRequest.getPassword() == null) {
-        throw new Exception("Username/Password can't be blank");
+      if(userLoginRequest.getEmail() == null || userLoginRequest.getPassword() == null) {
+        throw new Exception("Email/Password can't be blank");
       } else {
         Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userLoginRequest.getUsername(),
+                userLoginRequest.getEmail(),
                 userLoginRequest.getPassword()
         );
         Authentication userAuth = authenticationManager.authenticate(authentication);
