@@ -17,6 +17,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 
 @Configuration
 @EnableWebSecurity
@@ -29,7 +31,17 @@ public class SecurityConfig {
   JwtFilter jwtFilter;
   @Bean
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-    return http.csrf(customizer -> customizer.disable())
+    return http
+            // CSRF must be ON: the browser now sends the auth cookie automatically, even on
+            // requests another site triggers. Double-submit: Spring sets a readable XSRF-TOKEN
+            // cookie (withHttpOnlyFalse) and the frontend echoes it in the X-XSRF-TOKEN header.
+            .csrf(csrf -> csrf
+                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                    .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler())
+                    // Spring rotates the token when it thinks a user just logged in. A stateless app
+                    // re-authenticates from the cookie on EVERY request, so without this the token
+                    // changes constantly and parallel requests fail with 403.
+                    .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy()))
             .authorizeHttpRequests(request -> request
                     .requestMatchers("/users/signup", "/users/login", "/users/logout")
                     .permitAll()
