@@ -9,7 +9,6 @@ import com.travelplanner.travel_planner_api.repo.UserRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -35,26 +34,14 @@ public class UserService {
     return userRepo.save(userMapper.toEntity(user));
   }
 
+  // authenticate() throws BadCredentialsException for a wrong/blank email or password;
+  // it is no longer swallowed, so ApiExceptionHandler can turn it into a 401.
   public String verifyUser(UserLoginRequest userLoginRequest) {
-    try {
-      if(userLoginRequest.getEmail() == null || userLoginRequest.getPassword() == null) {
-        throw new Exception("Email/Password can't be blank");
-      } else {
-        Authentication authentication = new UsernamePasswordAuthenticationToken(
-                userLoginRequest.getEmail(),
-                userLoginRequest.getPassword()
-        );
-        Authentication userAuth = authenticationManager.authenticate(authentication);
-        if(userAuth.isAuthenticated()) {
-          return jwtService.generateToken(userLoginRequest);
-        } else {
-          throw new Exception("Invalid username or password");
-        }
-      }
-    } catch (Exception e) {
-      System.out.println(e.getMessage());
-    }
-    return "";
+    authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+            userLoginRequest.getEmail(),
+            userLoginRequest.getPassword()
+    ));
+    return jwtService.generateToken(userLoginRequest);
   }
 
   public User getUserDetails(String username) {
