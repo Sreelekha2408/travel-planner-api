@@ -1,0 +1,2 @@
+# Copy to local.properties (gitignored) and fill in your values.
+spring.datasource.password=your-db-password
