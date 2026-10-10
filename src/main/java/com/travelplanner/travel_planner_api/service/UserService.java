@@ -44,6 +44,10 @@ public class UserService {
     return jwtService.generateToken(userLoginRequest);
   }
 
+  public User getUserByEmail(String email) {
+    return userRepo.findByEmail(email);
+  }
+
   public User getUserDetails(String username) {
     return userRepo.findByUsername(username);
   }

@@ -31,7 +31,7 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     return http.csrf(customizer -> customizer.disable())
             .authorizeHttpRequests(request -> request
-                    .requestMatchers("/users/signup", "/users/login")
+                    .requestMatchers("/users/signup", "/users/login", "/users/logout")
                     .permitAll()
                     // Boot forwards errors to /error; if that needed auth, every error would become a 401.
                     .requestMatchers("/error").permitAll()
