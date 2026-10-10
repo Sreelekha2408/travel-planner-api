@@ -2,12 +2,13 @@ package com.travelplanner.travel_planner_api.jwt;
 
 import com.travelplanner.travel_planner_api.dto.user.UserLoginRequest;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import java.security.Key;
-import java.security.NoSuchAlgorithmException;
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,7 +16,15 @@ import java.util.Map;
 @Service
 public class JwtService {
 
-  private final SecretKey secretKey = generateKey();
+  private final SecretKey secretKey;
+  private final Duration expiration;
+
+  // The key comes from config, so tokens survive a restart and every instance agrees.
+  public JwtService(@Value("${app.jwt.secret}") String secret,
+                    @Value("${app.jwt.expiration}") Duration expiration) {
+    this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+    this.expiration = expiration;
+  }
 
   public String generateToken(UserLoginRequest user) {
     Map<String,Object> claims = new HashMap<>();
@@ -24,21 +33,10 @@ public class JwtService {
             .claims(claims)
             .subject(user.getUsername())
             .issuedAt(new Date(System.currentTimeMillis()))
-            .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30))
+            .expiration(new Date(System.currentTimeMillis() + expiration.toMillis()))
             .signWith(secretKey)
             .compact();
 
-  }
-
-  public SecretKey generateKey() {
-    try {
-      KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
-      keyGenerator.init(256);
-      Key key = keyGenerator.generateKey();
-      return (SecretKey) key;
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public boolean validateToken(String token) {
