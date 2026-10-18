@@ -138,6 +138,12 @@ public class TripService {
       if (invites.stream().anyMatch(email -> email == null || !EMAIL.matcher(email).matches())) {
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invites must be valid email addresses");
       }
+      // Travellers is the headcount and invitees are travellers who also use the app, so the
+      // count must cover the organiser plus everyone invited. Compares two fields, so it
+      // lives here rather than in a field annotation.
+      if (tripRequest.getTravellers() != null && tripRequest.getTravellers() < 1 + invites.size()) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Travellers must include you and everyone invited");
+      }
     }
   }
 }
