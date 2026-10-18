@@ -18,12 +18,20 @@ public class JwtService {
 
   private final SecretKey secretKey;
   private final Duration expiration;
+  private final Duration rememberMeExpiration;
 
   // The key comes from config, so tokens survive a restart and every instance agrees.
   public JwtService(@Value("${app.jwt.secret}") String secret,
-                    @Value("${app.jwt.expiration}") Duration expiration) {
+                    @Value("${app.jwt.expiration}") Duration expiration,
+                    @Value("${app.jwt.remember-me-expiration}") Duration rememberMeExpiration) {
     this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
     this.expiration = expiration;
+    this.rememberMeExpiration = rememberMeExpiration;
+  }
+
+  // How long a session lasts; the cookie's Max-Age uses the same value.
+  public Duration validityFor(boolean rememberMe) {
+    return rememberMe ? rememberMeExpiration : expiration;
   }
 
   public String generateToken(UserLoginRequest user) {
@@ -33,7 +41,7 @@ public class JwtService {
             .claims(claims)
             .subject(user.getEmail())
             .issuedAt(new Date(System.currentTimeMillis()))
-            .expiration(new Date(System.currentTimeMillis() + expiration.toMillis()))
+            .expiration(new Date(System.currentTimeMillis() + validityFor(user.isRememberMe()).toMillis()))
             .signWith(secretKey)
             .compact();
 

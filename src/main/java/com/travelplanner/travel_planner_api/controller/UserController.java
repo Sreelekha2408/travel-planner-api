@@ -5,6 +5,7 @@ import com.travelplanner.travel_planner_api.dto.user.UserRequestDTO;
 import com.travelplanner.travel_planner_api.dto.user.UserResponseDTO;
 import com.travelplanner.travel_planner_api.entities.User;
 import com.travelplanner.travel_planner_api.jwt.AuthCookies;
+import com.travelplanner.travel_planner_api.jwt.JwtService;
 import com.travelplanner.travel_planner_api.mapper.UserMapper;
 import com.travelplanner.travel_planner_api.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Duration;
 
 @RestController
 @RequestMapping(value = "/users")
@@ -26,6 +29,9 @@ public class UserController {
   @Autowired
   AuthCookies authCookies;
 
+  @Autowired
+  JwtService jwtService;
+
   @PostMapping("/signup")
   public UserResponseDTO createUser(@RequestBody UserRequestDTO userRequestDTO) {
     User user = userService.createUser(userRequestDTO);
@@ -36,8 +42,9 @@ public class UserController {
   public ResponseEntity<UserResponseDTO> login(@RequestBody UserLoginRequest userLoginRequest) {
     String jwt = userService.verifyUser(userLoginRequest);
     User user = userService.getUserByEmail(userLoginRequest.getEmail());
+    Duration validity = jwtService.validityFor(userLoginRequest.isRememberMe());
     return ResponseEntity.ok()
-            .header(HttpHeaders.SET_COOKIE, authCookies.create(jwt).toString())
+            .header(HttpHeaders.SET_COOKIE, authCookies.create(jwt, validity).toString())
             .body(userMapper.toResponse(user)); // the token is NOT in the body
   }
 

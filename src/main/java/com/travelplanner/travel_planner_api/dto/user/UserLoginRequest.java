@@ -6,4 +6,6 @@ import lombok.Data;
 public class UserLoginRequest {
   private String email;
   private String password;
+  // "Keep me signed in on this device": longer-lived cookie and JWT.
+  private boolean rememberMe;
 }

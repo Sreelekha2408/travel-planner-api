@@ -12,15 +12,13 @@ public class AuthCookies {
   public static final String ACCESS_TOKEN = "access_token";
 
   private final boolean secure;
-  private final Duration maxAge;
 
-  public AuthCookies(@Value("${app.auth.cookie-secure}") boolean secure,
-                     @Value("${app.jwt.expiration}") Duration maxAge) {
+  public AuthCookies(@Value("${app.auth.cookie-secure}") boolean secure) {
     this.secure = secure;
-    this.maxAge = maxAge; // cookie lifetime matches the JWT lifetime
   }
 
-  public ResponseCookie create(String jwt) {
+  // maxAge should equal the JWT's lifetime (JwtService.validityFor) so both expire together.
+  public ResponseCookie create(String jwt, Duration maxAge) {
     return base(jwt).maxAge(maxAge).build();
   }
 
