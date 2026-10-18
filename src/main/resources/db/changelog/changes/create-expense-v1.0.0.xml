@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="create-expense-v1.0.0" author="sreelekha">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="expense"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="expense">
+            <column name="expense_id" type="INTEGER" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="expense_pkey"/>
+            </column>
+            <column name="amount" type="DOUBLE PRECISION">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(255)"/>
+            <column name="currency" type="VARCHAR(255)"/>
+            <column name="expense_date" type="DATE"/>
+            <column name="payment_method" type="VARCHAR(255)"/>
+            <column name="trip_id" type="INTEGER"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="expense" baseColumnNames="trip_id"
+                                 referencedTableName="trip" referencedColumnNames="trip_id"
+                                 constraintName="fkhvt1sy7allwvp8x38s636adka"/>
+        <!-- Hibernate's CHECK for the enum column. Open-source Liquibase has no
+             addCheckConstraint change type, so plain SQL with an explicit rollback. -->
+        <sql>
+            ALTER TABLE expense ADD CONSTRAINT expense_category_check CHECK (category IN ('FOOD', 'HOTEL', 'TRANSPORT', 'SHOPPING', 'ACTIVITIES', 'FLIGHT', 'OTHER'));
+        </sql>
+        <rollback>
+            <dropTable tableName="expense"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

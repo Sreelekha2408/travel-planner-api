@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="create-itinerary-item-v1.0.0" author="sreelekha">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="itinerary_item"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="itinerary_item">
+            <column name="itinerary_item_id" type="INTEGER" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="itinerary_item_pkey"/>
+            </column>
+            <column name="activity_date" type="DATE"/>
+            <column name="activity_time" type="TIME(6)"/>
+            <column name="activity_type" type="VARCHAR(255)"/>
+            <column name="description" type="VARCHAR(255)"/>
+            <column name="location" type="VARCHAR(255)"/>
+            <column name="price" type="DOUBLE PRECISION">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="VARCHAR(255)"/>
+            <column name="trip_id" type="INTEGER"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="itinerary_item" baseColumnNames="trip_id"
+                                 referencedTableName="trip" referencedColumnNames="trip_id"
+                                 constraintName="fkj08xenn3scxguih1mipfsknd7"/>
+        <!-- Hibernate's CHECK for the enum column. Open-source Liquibase has no
+             addCheckConstraint change type, so plain SQL with an explicit rollback. -->
+        <sql>
+            ALTER TABLE itinerary_item ADD CONSTRAINT itinerary_item_activity_type_check CHECK (activity_type IN ('FLIGHT', 'HOTEL', 'FOOD', 'ACTIVITY', 'TRANSPORT'));
+        </sql>
+        <rollback>
+            <dropTable tableName="itinerary_item"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

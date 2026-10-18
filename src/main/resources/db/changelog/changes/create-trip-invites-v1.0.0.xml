@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="create-trip-invites-v1.0.0" author="sreelekha">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="trip_invites"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="trip_invites">
+            <column name="trip_id" type="INTEGER">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="VARCHAR(255)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="trip_invites" baseColumnNames="trip_id"
+                                 referencedTableName="trip" referencedColumnNames="trip_id"
+                                 constraintName="fkpcklsogqitqi3fktdjwsn97dt"/>
+    </changeSet>
+
+</databaseChangeLog>

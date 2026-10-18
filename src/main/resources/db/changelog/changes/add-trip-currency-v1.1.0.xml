@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Each trip's budget currency as an ISO 4217 code (e.g. INR, USD). -->
+
+    <!-- 1. Add the column. Databases where Hibernate already added it (before Liquibase)
+            skip this via the precondition. Rollback generated automatically (dropColumn). -->
+    <changeSet id="add-trip-currency-v1.1.0" author="sreelekha">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="trip" columnName="currency"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="trip">
+            <column name="currency" type="VARCHAR(3)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- 2. Data migration: trips saved before currencies existed get the app's default. -->
+    <changeSet id="backfill-trip-currency-v1.1.0" author="sreelekha">
+        <update tableName="trip">
+            <column name="currency" value="INR"/>
+            <where>currency IS NULL</where>
+        </update>
+        <!-- Nothing to undo safely: we can't know which rows were NULL before. -->
+        <rollback/>
+    </changeSet>
+
+    <!-- 3. Enforce it: exactly 3 characters, default INR, required. -->
+    <changeSet id="constrain-trip-currency-v1.1.0" author="sreelekha">
+        <modifyDataType tableName="trip" columnName="currency" newDataType="VARCHAR(3)"/>
+        <addDefaultValue tableName="trip" columnName="currency" defaultValue="INR"/>
+        <addNotNullConstraint tableName="trip" columnName="currency" columnDataType="VARCHAR(3)"/>
+        <!-- modifyDataType has no automatic rollback, so the whole reversal is spelled out. -->
+        <rollback>
+            <dropNotNullConstraint tableName="trip" columnName="currency" columnDataType="VARCHAR(3)"/>
+            <dropDefaultValue tableName="trip" columnName="currency"/>
+            <modifyDataType tableName="trip" columnName="currency" newDataType="VARCHAR(255)"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

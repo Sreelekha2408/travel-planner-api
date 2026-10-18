@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="create-trip-v1.0.0" author="sreelekha">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="trip"/>
+            </not>
+        </preConditions>
+
+        <createTable tableName="trip">
+            <column name="trip_id" type="SERIAL">
+                <constraints primaryKey="true" primaryKeyName="trip_pkey"/>
+            </column>
+            <column name="title" type="VARCHAR(255)"/>
+            <column name="source" type="VARCHAR(255)"/>
+            <column name="destination" type="VARCHAR(255)"/>
+            <column name="start_date" type="DATE"/>
+            <column name="end_date" type="DATE"/>
+            <column name="budget" type="DOUBLE PRECISION"/>
+            <column name="created_on" type="TIMESTAMP"/>
+            <column name="created_by" type="VARCHAR(255)"/>
+            <column name="user_id" type="INTEGER"/>
+            <column name="travellers" type="INTEGER"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="trip" baseColumnNames="user_id"
+                                 referencedTableName="users" referencedColumnNames="user_id"
+                                 constraintName="fk8qawa54m8w5olt1mrn50re3yw"/>
+    </changeSet>
+
+</databaseChangeLog>
