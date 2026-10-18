@@ -12,6 +12,8 @@ import java.util.List;
 public interface ExpenseRepo extends JpaRepository<Expense, Integer> {
   List<Expense> findAllByTrip_TripId(int tripId);
 
+  void deleteAllByTrip_TripId(int tripId);
+
   @Query("""
 SELECT SUM(e.amount) FROM Expense e where e.trip.user = :user""")
   Double getTotalExpensesByUser(User user);
