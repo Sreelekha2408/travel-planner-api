@@ -1,2 +1,4 @@
 # Copy to local.properties (gitignored) and fill in your values.
 spring.datasource.password=your-db-password
+# JWT signing key for local dev. Generate with: openssl rand -base64 32
+app.jwt.secret=paste-generated-key-here
