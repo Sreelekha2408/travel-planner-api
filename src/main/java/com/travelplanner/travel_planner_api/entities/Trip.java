@@ -24,6 +24,8 @@ public class Trip {
   private LocalDate startDate;
   private LocalDate endDate;
   private Double budget;
+  @Column(length = 3, nullable = false)
+  private String currency; // ISO 4217 code of the budget, e.g. "INR", "USD" (see add-trip-currency-v1.1.0.xml)
   private Integer travellers;
 
   // Small value collections, each stored in its own table keyed by trip_id. Loaded eagerly

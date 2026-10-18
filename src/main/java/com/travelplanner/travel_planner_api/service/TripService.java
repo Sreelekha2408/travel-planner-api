@@ -24,6 +24,10 @@ import java.util.regex.Pattern;
 public class TripService {
 
   // Same pattern the frontend uses.
+  // The currencies the app offers (same list as the frontend's currency picker).
+  private static final String DEFAULT_CURRENCY = "INR";
+  private static final Set<String> SUPPORTED_CURRENCIES =
+          Set.of("INR", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "AED");
   private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
   @Autowired
@@ -49,6 +53,7 @@ public class TripService {
             .getName();
     User user = userRepo.findByUsername(username);
     Trip trip = tripMapper.toEntity(tripRequest);
+    trip.setCurrency(currencyOrDefault(tripRequest));
     trip.setUser(user);
     return tripRepo.save(trip);
   }
@@ -71,6 +76,7 @@ public class TripService {
     trip.setStartDate(tripRequest.getStartDate());
     trip.setEndDate(tripRequest.getEndDate());
     trip.setBudget(tripRequest.getBudget());
+    trip.setCurrency(currencyOrDefault(tripRequest));
     trip.setTravellers(tripRequest.getTravellers());
     // Replace the contents (not the Set itself) so Hibernate tracks the change.
     trip.getTripTypes().clear();
@@ -99,6 +105,11 @@ public class TripService {
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Trip not found"));
   }
 
+  // Trips sent without a currency use the app's default.
+  private String currencyOrDefault(TripRequest tripRequest) {
+    return tripRequest.getCurrency() == null ? DEFAULT_CURRENCY : tripRequest.getCurrency();
+  }
+
   private void validate(TripRequest tripRequest) {
     if (!StringUtils.hasText(tripRequest.getTitle()) || !StringUtils.hasText(tripRequest.getDestination())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trip name and destination are required");
@@ -111,6 +122,10 @@ public class TripService {
     }
     if (tripRequest.getBudget() != null && tripRequest.getBudget() < 0) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Budget can't be negative");
+    }
+    if (tripRequest.getCurrency() != null && !SUPPORTED_CURRENCIES.contains(tripRequest.getCurrency())) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+              "Currency must be one of " + String.join(", ", SUPPORTED_CURRENCIES.stream().sorted().toList()));
     }
     if (tripRequest.getTravellers() != null && (tripRequest.getTravellers() < 1 || tripRequest.getTravellers() > 50)) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Travellers must be between 1 and 50");

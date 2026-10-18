@@ -14,6 +14,7 @@ public class TripRequest {
   private LocalDate startDate;
   private LocalDate endDate;
   private Double budget;
+  private String currency;
   private Integer travellers;
   private Set<TripType> tripTypes;
   private Set<String> invitedEmails;
