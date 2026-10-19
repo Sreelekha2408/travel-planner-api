@@ -1,7 +1,7 @@
 package com.travelplanner.travel_planner_api.service;
 
-import com.travelplanner.travel_planner_api.dto.user.UserLoginRequest;
-import com.travelplanner.travel_planner_api.dto.user.UserRequestDTO;
+import com.travelplanner.travel_planner_api.dto.user.LoginRequest;
+import com.travelplanner.travel_planner_api.dto.user.SignUpRequest;
 import com.travelplanner.travel_planner_api.entities.User;
 import com.travelplanner.travel_planner_api.jwt.JwtService;
 import com.travelplanner.travel_planner_api.mapper.UserMapper;
@@ -34,8 +34,8 @@ public class UserService {
   PasswordEncoder encoder;
 
   // Field rules (required, email format, password strength) are annotations on
-  // UserRequestDTO, checked by @Valid in UserController before this runs.
-  public User createUser(UserRequestDTO user) {
+  // SignUpRequest, checked by @Valid in UserController before this runs.
+  public User createUser(SignUpRequest user) {
     // The sign-up form has no username field; the email is unique, so it doubles as one.
     if (!StringUtils.hasText(user.getUsername())) {
       user.setUsername(user.getEmail());
@@ -54,12 +54,12 @@ public class UserService {
 
   // authenticate() throws BadCredentialsException for a wrong/blank email or password;
   // it is no longer swallowed, so ApiExceptionHandler can turn it into a 401.
-  public String verifyUser(UserLoginRequest userLoginRequest) {
+  public String verifyUser(LoginRequest loginRequest) {
     authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-            userLoginRequest.getEmail(),
-            userLoginRequest.getPassword()
+            loginRequest.getEmail(),
+            loginRequest.getPassword()
     ));
-    return jwtService.generateToken(userLoginRequest);
+    return jwtService.generateToken(loginRequest);
   }
 
   public User getUserByEmail(String email) {

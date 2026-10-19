@@ -11,7 +11,7 @@ import lombok.Data;
 // Sign-up request, validated by @Valid in UserController. Uniqueness (email, username)
 // needs the database, so UserService still checks that.
 @Data
-public class UserRequestDTO {
+public class SignUpRequest {
 
   @Size(max = 255, message = "Username must be 255 characters or fewer")
   private String username;

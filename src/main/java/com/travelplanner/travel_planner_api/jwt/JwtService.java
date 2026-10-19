@@ -1,6 +1,6 @@
 package com.travelplanner.travel_planner_api.jwt;
 
-import com.travelplanner.travel_planner_api.dto.user.UserLoginRequest;
+import com.travelplanner.travel_planner_api.dto.user.LoginRequest;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -34,7 +34,7 @@ public class JwtService {
     return rememberMe ? rememberMeExpiration : expiration;
   }
 
-  public String generateToken(UserLoginRequest user) {
+  public String generateToken(LoginRequest user) {
     Map<String,Object> claims = new HashMap<>();
     claims.put("roles", "USER");
     return Jwts.builder()
