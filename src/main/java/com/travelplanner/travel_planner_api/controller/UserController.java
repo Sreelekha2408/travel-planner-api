@@ -8,6 +8,7 @@ import com.travelplanner.travel_planner_api.jwt.AuthCookies;
 import com.travelplanner.travel_planner_api.jwt.JwtService;
 import com.travelplanner.travel_planner_api.mapper.UserMapper;
 import com.travelplanner.travel_planner_api.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
@@ -33,13 +34,13 @@ public class UserController {
   JwtService jwtService;
 
   @PostMapping("/signup")
-  public UserResponseDTO createUser(@RequestBody UserRequestDTO userRequestDTO) {
+  public UserResponseDTO createUser(@Valid @RequestBody UserRequestDTO userRequestDTO) {
     User user = userService.createUser(userRequestDTO);
     return userMapper.toResponse(user);
   }
 
   @PostMapping("/login")
-  public ResponseEntity<UserResponseDTO> login(@RequestBody UserLoginRequest userLoginRequest) {
+  public ResponseEntity<UserResponseDTO> login(@Valid @RequestBody UserLoginRequest userLoginRequest) {
     String jwt = userService.verifyUser(userLoginRequest);
     User user = userService.getUserByEmail(userLoginRequest.getEmail());
     Duration validity = jwtService.validityFor(userLoginRequest.isRememberMe());

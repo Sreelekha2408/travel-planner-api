@@ -5,6 +5,7 @@ import com.travelplanner.travel_planner_api.dto.trip.TripResponse;
 import com.travelplanner.travel_planner_api.entities.Trip;
 import com.travelplanner.travel_planner_api.mapper.TripMapper;
 import com.travelplanner.travel_planner_api.service.TripService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class TripController {
   TripMapper tripMapper;
 
   @PostMapping("/create")
-  public TripResponse createTrip(@RequestBody TripRequest tripRequest) {
+  public TripResponse createTrip(@Valid @RequestBody TripRequest tripRequest) {
     Trip trip = tripService.createTrip(tripRequest);
     return tripMapper.toResponse(trip);
   }
@@ -40,7 +41,7 @@ public class TripController {
   }
 
   @PutMapping("/{id}")
-  public TripResponse updateTrip(@PathVariable("id") int id, @RequestBody TripRequest tripRequest) {
+  public TripResponse updateTrip(@PathVariable("id") int id, @Valid @RequestBody TripRequest tripRequest) {
     Trip trip = tripService.updateTrip(id, tripRequest);
     return tripMapper.toResponse(trip);
   }

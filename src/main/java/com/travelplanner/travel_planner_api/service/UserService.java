@@ -15,12 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.regex.Pattern;
-
 @Service
 public class UserService {
-
-  private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
   @Autowired
   UserRepo userRepo;
@@ -37,8 +33,9 @@ public class UserService {
   @Autowired
   PasswordEncoder encoder;
 
+  // Field rules (required, email format, password strength) are annotations on
+  // UserRequestDTO, checked by @Valid in UserController before this runs.
   public User createUser(UserRequestDTO user) {
-    validateSignup(user);
     // The sign-up form has no username field; the email is unique, so it doubles as one.
     if (!StringUtils.hasText(user.getUsername())) {
       user.setUsername(user.getEmail());
@@ -53,21 +50,6 @@ public class UserService {
     }
     user.setPassword(encoder.encode(user.getPassword()));
     return userRepo.save(userMapper.toEntity(user));
-  }
-
-  private void validateSignup(UserRequestDTO user) {
-    if (!StringUtils.hasText(user.getFirstName())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "First name is required");
-    }
-    if (user.getEmail() == null || !EMAIL.matcher(user.getEmail()).matches()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Enter a valid email address");
-    }
-    String password = user.getPassword();
-    if (password == null || password.length() < 8
-            || !password.matches(".*[A-Za-z].*") || !password.matches(".*\\d.*")) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-              "Use 8 or more characters with a mix of letters and numbers");
-    }
   }
 
   // authenticate() throws BadCredentialsException for a wrong/blank email or password;

@@ -13,22 +13,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 @Service
 public class TripService {
 
-  // Same pattern the frontend uses.
   // The currencies the app offers (same list as the frontend's currency picker).
   private static final String DEFAULT_CURRENCY = "INR";
   private static final Set<String> SUPPORTED_CURRENCIES =
           Set.of("INR", "USD", "EUR", "GBP", "JPY", "AUD", "CAD", "SGD", "AED");
-  private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
   @Autowired
   TripRepo tripRepo;
@@ -110,34 +106,18 @@ public class TripService {
     return tripRequest.getCurrency() == null ? DEFAULT_CURRENCY : tripRequest.getCurrency();
   }
 
+  // Single-field rules (required, lengths, ranges, email format) are annotations on
+  // TripRequest, checked by @Valid before this runs. These compare fields or use app data.
   private void validate(TripRequest tripRequest) {
-    if (!StringUtils.hasText(tripRequest.getTitle()) || !StringUtils.hasText(tripRequest.getDestination())) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trip name and destination are required");
-    }
-    if (tripRequest.getStartDate() == null || tripRequest.getEndDate() == null) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Start and end dates are required");
-    }
     if (tripRequest.getEndDate().isBefore(tripRequest.getStartDate())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End date must be on or after the start date");
-    }
-    if (tripRequest.getBudget() != null && tripRequest.getBudget() < 0) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Budget can't be negative");
     }
     if (tripRequest.getCurrency() != null && !SUPPORTED_CURRENCIES.contains(tripRequest.getCurrency())) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
               "Currency must be one of " + String.join(", ", SUPPORTED_CURRENCIES.stream().sorted().toList()));
     }
-    if (tripRequest.getTravellers() != null && (tripRequest.getTravellers() < 1 || tripRequest.getTravellers() > 50)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Travellers must be between 1 and 50");
-    }
     Set<String> invites = tripRequest.getInvitedEmails();
     if (invites != null) {
-      if (invites.size() > 20) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You can invite up to 20 people");
-      }
-      if (invites.stream().anyMatch(email -> email == null || !EMAIL.matcher(email).matches())) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invites must be valid email addresses");
-      }
       // Travellers is the headcount and invitees are travellers who also use the app, so the
       // count must cover the organiser plus everyone invited. Compares two fields, so it
       // lives here rather than in a field annotation.
