@@ -63,10 +63,4 @@ public class UserController {
             .header(HttpHeaders.SET_COOKIE, authCookies.clear().toString())
             .build();
   }
-
-  @GetMapping("/details/{username}")
-  public UserResponse getUserDetails(@PathVariable String username) {
-    User user = userService.getUserDetails(username);
-    return userMapper.toResponse(user);
-  }
 }
