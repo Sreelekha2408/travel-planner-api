@@ -5,7 +5,6 @@ import com.travelplanner.travel_planner_api.entities.Expense;
 import com.travelplanner.travel_planner_api.entities.Trip;
 import com.travelplanner.travel_planner_api.mapper.ExpenseMapper;
 import com.travelplanner.travel_planner_api.repo.ExpenseRepo;
-import com.travelplanner.travel_planner_api.repo.TripRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,8 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
+// Every method first checks the trip (or the expense's trip) belongs to the signed-in user.
+// Someone else's trip or expense gets the same 404 as a missing one, so ids can't be probed.
 @Service
 public class ExpenseService {
 
@@ -25,53 +25,48 @@ public class ExpenseService {
   ExpenseMapper expenseMapper;
 
   @Autowired
-  TripRepo tripRepo;
+  TripService tripService;
 
   public Expense createExpense(int tripId, ExpenseRequest expenseRequest) {
-    Trip trip = tripRepo.findById(tripId).orElseThrow(() -> new IllegalArgumentException("Trip not found"));
-    String username = trip.getUser().getUsername();
-    String loggedInUser = SecurityContextHolder.getContext().getAuthentication().getName();
-    if(username.equals(loggedInUser)) {
-      Expense expense = expenseMapper.toEntity(expenseRequest);
-      expense.setTrip(trip);
-      return expenseRepo.save(expense);
-    } else {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Trip doesn't exist for this user");
-    }
+    Trip trip = tripService.getTripById(tripId); // 404 unless it's yours
+    Expense expense = expenseMapper.toEntity(expenseRequest);
+    expense.setTrip(trip);
+    expense.setCurrency(currencyOrTrips(expenseRequest, trip));
+    return expenseRepo.save(expense);
   }
 
+  // Newest first, like the design's "Recent Transactions".
   public List<Expense> getAllExpenses(int tripId) {
-    return expenseRepo.findAllByTrip_TripId(tripId);
+    Trip trip = tripService.getTripById(tripId);
+    return expenseRepo.findAllByTrip_TripIdOrderByExpenseDateDescExpenseIdDesc(trip.getTripId());
   }
 
   public Expense updateExpense(int expenseId, ExpenseRequest expenseRequest) {
-    Expense expense = expenseRepo.findById(expenseId).orElseThrow(() -> new NoSuchElementException("Expense not found"));
-    Trip trip = tripRepo.findById(expense.getTrip().getTripId()).orElseThrow(() -> new IllegalArgumentException("Trip not found"));
-    String username = trip.getUser().getUsername();
-    String loggedInUser = SecurityContextHolder.getContext().getAuthentication().getName();
-    if(username.equals(loggedInUser)) {
-      expense.setAmount(expenseRequest.getAmount());
-      expense.setTrip(trip);
-      expense.setExpenseDate(expenseRequest.getExpenseDate());
-      expense.setCurrency(expenseRequest.getCurrency());
-      expense.setPaymentMethod(expenseRequest.getPaymentMethod());
-      expense.setCategory(expenseRequest.getCategory());
-      return expenseRepo.save(expense);
-    } else {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User not allowed to update this expense");
-    }
+    Expense expense = findOwnedExpense(expenseId);
+    expense.setTitle(expenseRequest.getTitle());
+    expense.setAmount(expenseRequest.getAmount());
+    expense.setExpenseDate(expenseRequest.getExpenseDate());
+    expense.setCurrency(currencyOrTrips(expenseRequest, expense.getTrip()));
+    expense.setPaymentMethod(expenseRequest.getPaymentMethod());
+    expense.setCategory(expenseRequest.getCategory());
+    return expenseRepo.save(expense);
   }
 
   public String deleteExpense(int expenseId) {
-    Expense expense = expenseRepo.findById(expenseId).orElseThrow(() -> new NoSuchElementException("Expense not found"));
-    Trip trip = expense.getTrip();
-    String username = trip.getUser().getUsername();
-    String loggedInUser = SecurityContextHolder.getContext().getAuthentication().getName();
-    if(username.equals(loggedInUser)) {
-      expenseRepo.deleteById(expenseId);
-      return "Expense deleted with id: " + expenseId;
-    } else {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User not allowed to delete this expense");
-    }
+    expenseRepo.delete(findOwnedExpense(expenseId));
+    return "Expense deleted with id: " + expenseId;
+  }
+
+  private Expense findOwnedExpense(int expenseId) {
+    String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    return expenseRepo.findById(expenseId)
+            .filter(expense -> expense.getTrip() != null && expense.getTrip().getUser() != null
+                    && expense.getTrip().getUser().getUsername().equals(username))
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Expense not found"));
+  }
+
+  // Expenses sent without a currency use the trip's, so totals add up in one currency.
+  private String currencyOrTrips(ExpenseRequest expenseRequest, Trip trip) {
+    return expenseRequest.getCurrency() != null ? expenseRequest.getCurrency() : trip.getCurrency();
   }
 }

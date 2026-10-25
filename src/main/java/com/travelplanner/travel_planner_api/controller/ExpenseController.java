@@ -5,6 +5,7 @@ import com.travelplanner.travel_planner_api.dto.expenses.ExpenseResponse;
 import com.travelplanner.travel_planner_api.entities.Expense;
 import com.travelplanner.travel_planner_api.mapper.ExpenseMapper;
 import com.travelplanner.travel_planner_api.service.ExpenseService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +23,7 @@ public class ExpenseController {
   ExpenseMapper expenseMapper;
 
   @PostMapping("/{tripId}")
-  public ExpenseResponse createExpense(@PathVariable int tripId, @RequestBody ExpenseRequest expenseRequest) {
+  public ExpenseResponse createExpense(@PathVariable int tripId, @Valid @RequestBody ExpenseRequest expenseRequest) {
     Expense expense = expenseService.createExpense(tripId, expenseRequest);
     return expenseMapper.toResponse(expense);
   }
@@ -38,7 +39,7 @@ public class ExpenseController {
   }
 
   @PutMapping("/{expenseId}")
-  public ExpenseResponse updateExpense(@PathVariable int expenseId, @RequestBody ExpenseRequest expenseRequest) {
+  public ExpenseResponse updateExpense(@PathVariable int expenseId, @Valid @RequestBody ExpenseRequest expenseRequest) {
     Expense expense = expenseService.updateExpense(expenseId, expenseRequest);
     return expenseMapper.toResponse(expense);
   }

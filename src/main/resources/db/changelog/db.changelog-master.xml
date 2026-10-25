@@ -31,4 +31,7 @@
     <include file="changes/add-trip-currency-v1.1.0.xml" relativeToChangelogFile="true"/>
     <include file="changes/users-email-unique-not-null-v1.1.0.xml" relativeToChangelogFile="true"/>
 
+    <!-- v1.2.0 -->
+    <include file="changes/add-expense-title-v1.2.0.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>

@@ -15,6 +15,8 @@ public class Expense {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private int expenseId;
+  @Column(nullable = false)
+  private String title;
   private double amount;
   @Enumerated(EnumType.STRING)
   private ExpenseType category;

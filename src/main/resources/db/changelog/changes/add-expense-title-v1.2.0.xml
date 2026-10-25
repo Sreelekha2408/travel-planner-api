@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- What each expense was for (e.g. "Dinner at Locavore"), as in the design's expense list. -->
+
+    <!-- 1. Add the column. Rollback generated automatically (dropColumn). -->
+    <changeSet id="add-expense-title-v1.2.0" author="sreelekha">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="expense" columnName="title"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="expense">
+            <column name="title" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- 2. Data migration: expenses saved before titles existed are named after their
+            category (FOOD -> "Food"), or "Expense" when they have none. -->
+    <changeSet id="backfill-expense-title-v1.2.0" author="sreelekha">
+        <update tableName="expense">
+            <column name="title" valueComputed="COALESCE(INITCAP(category), 'Expense')"/>
+            <where>title IS NULL</where>
+        </update>
+        <!-- Nothing to undo safely: we can't know which rows were NULL before. -->
+        <rollback/>
+    </changeSet>
+
+    <!-- 3. Enforce it: every expense has a title. -->
+    <changeSet id="constrain-expense-title-v1.2.0" author="sreelekha">
+        <addNotNullConstraint tableName="expense" columnName="title" columnDataType="VARCHAR(255)"/>
+        <rollback>
+            <dropNotNullConstraint tableName="expense" columnName="title" columnDataType="VARCHAR(255)"/>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
