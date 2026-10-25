@@ -5,9 +5,9 @@ import com.travelplanner.travel_planner_api.dto.itinerary.ItineraryResponse;
 import com.travelplanner.travel_planner_api.entities.ItineraryItem;
 import com.travelplanner.travel_planner_api.mapper.ItineraryMapper;
 import com.travelplanner.travel_planner_api.service.ItineraryService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +23,7 @@ public class ItineraryController {
   ItineraryMapper itineraryMapper;
 
   @PostMapping("/{tripId}")
-  public List<ItineraryResponse> createItinerary(@PathVariable int tripId, @RequestBody List<ItineraryRequest> itineraryRequests) {
+  public List<ItineraryResponse> createItinerary(@PathVariable int tripId, @RequestBody List<@Valid ItineraryRequest> itineraryRequests) {
     List<ItineraryItem> itineraryItems = itineraryService.createItineraries(tripId, itineraryRequests);
     List<ItineraryResponse> itineraryResponses = new ArrayList<>();
     for (ItineraryItem itineraryItem : itineraryItems) {
@@ -43,7 +43,7 @@ public class ItineraryController {
   }
 
   @PutMapping("/{itineraryId}")
-  public ItineraryResponse updateItinerary(@PathVariable int itineraryId, @RequestBody ItineraryRequest itineraryRequest) {
+  public ItineraryResponse updateItinerary(@PathVariable int itineraryId, @Valid @RequestBody ItineraryRequest itineraryRequest) {
     ItineraryItem item = itineraryService.updateItinerary(itineraryId, itineraryRequest);
     return itineraryMapper.toResponse(item);
   }
@@ -53,7 +53,6 @@ public class ItineraryController {
     return itineraryService.deleteItinerary(itineraryId);
   }
 
-  @Transactional
   @DeleteMapping("/all/{tripId}")
   public String deleteAllItineraries(@PathVariable int tripId) {
     return itineraryService.deleteAllItineraries(tripId);
