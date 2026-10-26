@@ -1,0 +1,11 @@
+# Files Docker leaves out when it copies the project into the build (like .gitignore).
+
+# Secrets: never bake them into an image. Production passes them as environment variables.
+src/main/resources/local.properties
+
+# Build output and local tooling: rebuilt inside the image or not needed there.
+target/
+.git/
+.idea/
+*.iml
+HELP.md
