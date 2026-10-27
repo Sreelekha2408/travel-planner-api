@@ -4,6 +4,10 @@ The REST API behind [TravelPlan](https://github.com/Sreelekha2408/travel-planner
 planner: accounts, trips, day-by-day itineraries and expenses. Spring Boot + PostgreSQL, with the
 session JWT in an HttpOnly cookie and CSRF protection.
 
+**Live demo: [sreelekha-travel-planner.vercel.app](https://sreelekha-travel-planner.vercel.app)**
+(the web app; it calls this API through Vercel). Free hosting, so the first request after a quiet
+spell can take up to a minute while the server wakes up.
+
 > Built with React and Spring Boot; used Claude for code review, debugging and test generation.
 
 ## Tech stack
@@ -54,6 +58,20 @@ match the tables (`ddl-auto=validate`) and refuses to start if they don't.
 | `APP_JWT_SECRET` | JWT signing key (required; the app won't start without one) |
 | `APP_AUTH_COOKIE_SECURE=true` | Send the auth cookie over HTTPS only |
 | `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | Database connection |
+| `PORT` | Port to listen on (set by the host; 8080 by default) |
+| `LOGGING_LEVEL_ORG_HIBERNATE_SQL=DEBUG` | Optional: log every SQL query while debugging (off by default) |
+
+### Deployment
+
+The [`Dockerfile`](Dockerfile) builds the jar with the JDK and runs it on a smaller JRE image as a
+non-root user. The live API runs on Render (Docker, free plan) with the database on Neon
+(PostgreSQL); Render redeploys on every push to `main`.
+
+```bash
+docker build -t travel-planner-api .
+docker run -p 8080:8080 -e APP_JWT_SECRET=... -e SPRING_DATASOURCE_URL=... \
+  -e SPRING_DATASOURCE_USERNAME=... -e SPRING_DATASOURCE_PASSWORD=... travel-planner-api
+```
 
 ## API
 
@@ -95,6 +113,10 @@ For a list body (adding several activities), keys name the item: `"[1].title"`.
 - **Cookie auth**: the JWT is set in an HttpOnly, SameSite=Lax cookie, so JavaScript in the
   browser can never read it; CSRF uses Spring's double-submit cookie
   (`CookieCsrfTokenRepository`). A 401 entry point replaces the default login redirect.
+- **Passwords**: BCrypt at cost 10. Hashes made with an older cost are redone on the user's
+  next successful sign-in (Spring's `UserDetailsPasswordService`), since that's the only moment
+  the plain password is available. Emails are trimmed and lowercased before they're stored or
+  looked up.
 - **Ownership**: every trip, itinerary and expense operation checks that the data belongs to the
   signed-in user. Someone else's data gets the same 404 as missing data, so ids can't be probed.
 - **Validation in two layers**: single-field rules are annotations on the request classes
