@@ -60,8 +60,11 @@ public class SecurityConfig {
   @Bean
   public AuthenticationProvider authenticationProvider() {
     DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-    authProvider.setPasswordEncoder(new BCryptPasswordEncoder(12));
+    authProvider.setPasswordEncoder(passwordEncoder());
     authProvider.setUserDetailsService(userAuthService);
+    // After a successful sign-in, Spring asks the encoder whether the stored hash should be
+    // redone (upgradeEncoding) and, if so, saves a new one through this service.
+    authProvider.setUserDetailsPasswordService(userAuthService);
     return authProvider;
   }
 
@@ -70,8 +73,21 @@ public class SecurityConfig {
       return config.getAuthenticationManager();
   }
 
+  // Each +1 doubles BCrypt's work. 10 is Spring's default and OWASP's minimum; 12 took ~2 s
+  // per sign-in on the 0.1-CPU free host. The cost is stored in every hash ($2a$12$...),
+  // so older cost-12 hashes still verify.
+  private static final int BCRYPT_STRENGTH = 10;
+
   @Bean
   public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder(12);
+    return new BCryptPasswordEncoder(BCRYPT_STRENGTH) {
+      // BCrypt's own check only flags hashes WEAKER than the current strength. Also flag the
+      // older, slower cost-12 ones so they're redone at cost 10 on the user's next sign-in.
+      @Override
+      public boolean upgradeEncoding(String encodedPassword) {
+        // A hash looks like $2a$10$<salt+hash>; the number between the $ signs is the cost.
+        return encodedPassword != null && !encodedPassword.matches("^\\$2[aby]?\\$" + BCRYPT_STRENGTH + "\\$.*");
+      }
+    };
   }
 }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                            http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <!-- Data migration: sign-up and sign-in now trim and lowercase emails
+         (EmailAddresses.normalize), so existing rows must be in the same form or those
+         users could no longer sign in. -->
+    <changeSet id="lowercase-user-emails-v1.3.0" author="sreelekha">
+        <!-- Two accounts that differ only by case (Maya@x.com and maya@x.com) would collide
+             on users_email_unique. Stop and let a person decide instead of guessing. -->
+        <preConditions onFail="HALT" onFailMessage="Some emails differ only by case or spaces; merge those accounts first.">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM (
+                    SELECT LOWER(TRIM(email)) FROM users GROUP BY LOWER(TRIM(email)) HAVING COUNT(*) > 1
+                ) AS duplicates
+            </sqlCheck>
+        </preConditions>
+        <update tableName="users">
+            <column name="email" valueComputed="LOWER(TRIM(email))"/>
+            <where>email &lt;&gt; LOWER(TRIM(email))</where>
+        </update>
+        <!-- Nothing to undo: the original capitalisation isn't kept anywhere. -->
+        <rollback/>
+    </changeSet>
+
+</databaseChangeLog>

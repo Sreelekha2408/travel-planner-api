@@ -1,5 +1,6 @@
 package com.travelplanner.travel_planner_api.dto.user;
 
+import com.travelplanner.travel_planner_api.dto.EmailAddresses;
 import com.travelplanner.travel_planner_api.dto.ValidationPatterns;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -41,4 +42,10 @@ public class SignUpRequest {
 
   @Size(max = 255, message = "Picture must be 255 characters or fewer")
   private String picture;
+
+  // Jackson calls this setter while reading the JSON, before @Valid runs, so the stored and
+  // validated email is the normalized one (" Maya@Example.com " -> "maya@example.com").
+  public void setEmail(String email) {
+    this.email = EmailAddresses.normalize(email);
+  }
 }

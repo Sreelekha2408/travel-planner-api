@@ -34,4 +34,7 @@
     <!-- v1.2.0 -->
     <include file="changes/add-expense-title-v1.2.0.xml" relativeToChangelogFile="true"/>
 
+    <!-- v1.3.0 -->
+    <include file="changes/lowercase-user-emails-v1.3.0.xml" relativeToChangelogFile="true"/>
+
 </databaseChangeLog>
